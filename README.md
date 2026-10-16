@@ -29,17 +29,18 @@
 
 ## Структура проекта
 
+```
 passwordApi/
 ├── App_Code/
-│ ├── SecretStore.cs # Шифрование, хранение, атомарное извлечение
-│ └── ApiAuth.cs # Проверка X-Api-Key и IP
+│   ├── SecretStore.cs        # Шифрование, хранение, атомарное извлечение
+│   └── ApiAuth.cs            # Проверка X-Api-Key и IP
 ├── App_Data/
-│ └── secrets/ # Зашифрованные файлы (не в git)
-│ └── web.config # deny all
-├── Api.ashx # POST /Api.ashx — создать ссылку
-├── View.ashx # GET /View.ashx?id=... — просмотр пароля
+│   └── secrets/              # Зашифрованные файлы (не в git)
+│       └── web.config        # deny all
+├── Api.ashx                  # POST /Api.ashx — создать ссылку
+├── View.ashx                 # GET  /View.ashx?id=... — просмотр пароля
 └── Web.config
-
+```
 
 ## Требования
 
@@ -65,6 +66,19 @@ curl.exe -X POST https://your-domain.example/Api.ashx `
   -H "X-Api-Key: ВАШ_КЛЮЧ" `
   -H "Content-Type: application/json" `
   -d "{\"secret\":\"test\",\"ttl\":5}"
+```
 
+Подробнее — в [docs/INSTALL.md](docs/INSTALL.md).
 
-Подробнее — в docs/INSTALL.md.
+## Как это работает
+
+1. Клиент POST-ит `secret` на `Api.ashx`.
+2. `SecretStore.Create` шифрует и атомарно пишет `App_Data\secrets\{guid}.secret`.
+3. API возвращает `View.ashx?id={guid}`.
+4. Получатель открывает URL.
+5. `SecretStore.Take` атомарно захватывает файл, расшифровывает, удаляет.
+6. Повторный заход → 404.
+
+## Лицензия
+
+MIT (или укажите свою).
