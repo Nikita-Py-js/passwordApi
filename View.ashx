@@ -6,30 +6,33 @@ using System.Web;
 public class ViewHandler : IHttpHandler
 {
     public void ProcessRequest(HttpContext ctx)
-    {
-        ctx.Response.Cache.SetCacheability(HttpCacheability.NoCache);
-        ctx.Response.Cache.SetNoStore();
+{
+    ctx.Response.Cache.SetCacheability(HttpCacheability.NoCache);
+    ctx.Response.Cache.SetNoStore();
 
-        string id     = ctx.Request.QueryString["id"];
-        string user   = ctx.Request.QueryString["u"];
-        string date   = ctx.Request.QueryString["d"];
+    // Ключевая строка: не даём IIS подменять наш 404 своей страницей
+    ctx.Response.TrySkipIisCustomErrors = true;
 
-        string secret = SecretStore.Take(id);
+    string id   = ctx.Request.QueryString["id"];
+    string user = ctx.Request.QueryString["u"];
+    string date = ctx.Request.QueryString["d"];
 
-        string html = secret == null
-            ? RenderInvalid()
-            : RenderSecret(secret, user, date);
+    string secret = SecretStore.Take(id);
 
-        if (secret == null) ctx.Response.StatusCode = 404;
+    string html = secret == null
+        ? RenderInvalid()
+        : RenderSecret(secret, user, date);
 
-        ctx.Response.Clear();
-        ctx.Response.Charset = "utf-8";
-        ctx.Response.ContentEncoding = Encoding.UTF8;
-        ctx.Response.ContentType = "text/html; charset=utf-8";
-        byte[] bytes = Encoding.UTF8.GetBytes(html);
-        ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
-        ctx.Response.Flush();
-    }
+    if (secret == null) ctx.Response.StatusCode = 404;
+
+    ctx.Response.Clear();
+    ctx.Response.Charset = "utf-8";
+    ctx.Response.ContentEncoding = Encoding.UTF8;
+    ctx.Response.ContentType = "text/html; charset=utf-8";
+    byte[] bytes = Encoding.UTF8.GetBytes(html);
+    ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+    ctx.Response.Flush();
+}
 
     private static string RenderSecret(string secret, string user, string date)
     {
@@ -243,7 +246,6 @@ public class ViewHandler : IHttpHandler
             "    <span class=\"sep\">·</span>" +
             "    <span>8 (495) 230-03-03 доб. 333</span>" +
             "  </div>" +
-            "  <div class=\"footer-note\">Это автоматическое сообщение. Пожалуйста, не отвечайте на него.</div>" +
             "</div>" +
 
             "</div></div></body></html>";
